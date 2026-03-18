@@ -1,5 +1,4 @@
 from passlib.context import CryptContext
-import hashlib
 
 pwd_context = CryptContext(
     schemes=["bcrypt"],
@@ -7,5 +6,7 @@ pwd_context = CryptContext(
 )
 
 def hash_password(password: str) -> str:
-    pwd = hashlib.sha256(password.encode()).hexdigest()
-    return pwd_context.hash(pwd)
+    return pwd_context.hash(password)
+
+def verify_password(plain: str, hashed: str) -> bool:
+    return pwd_context.verify(plain, hashed)
