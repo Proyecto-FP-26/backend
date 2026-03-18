@@ -7,6 +7,8 @@ from sqlalchemy import select
 from app.db.database import get_db
 from app.models.user import User
 
+from app.routers.reports import router as reports_router
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     #Todo lo que este aqui se ejecuta al principio
@@ -15,6 +17,8 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=lifespan)
+
+app.include_router(reports_router)
 
 @app.get("/")
 async def root():
