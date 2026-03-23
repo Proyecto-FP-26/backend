@@ -1,4 +1,4 @@
-# Proyecto de FASTApi
+# Proyecto de FastAPI
 
 API REST construida con **FastAPI** usando **SQLAlchemy async** con **PostgreSQL**.
 
@@ -20,7 +20,7 @@ El proyecto usa **uv**, por lo que puedes crear el entorno virtual y sincronizar
 uv sync
 ```
 
-Esto creará `.venv` y instalará todas las dependencias automáticamente.
+Esto creará `.venv` e instalará todas las dependencias automáticamente.
 
 ## 2. Configurar variables de entorno
 
