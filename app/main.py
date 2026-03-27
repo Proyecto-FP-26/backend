@@ -1,11 +1,7 @@
-from fastapi import FastAPI, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import FastAPI
 from app.db.database import AsyncSessionLocal
 from app.db.seeds.admin import seed_admin
 from contextlib import asynccontextmanager
-from sqlalchemy import select
-from app.db.database import get_db
-from app.models.user import User
 
 from app.routers.reports import router as reports_router
 from app.routers.auth import router as auth_router
