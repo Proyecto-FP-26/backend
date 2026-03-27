@@ -23,16 +23,18 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 def create_access_token(data: dict, expires_delta: timedelta = timedelta(minutes=5)): #https://www.rfc-editor.org/rfc/rfc7519#section-4.1.2
     to_encode = data.copy()
+    to_encode["sub"] = str(to_encode["sub"]) #Sub no puede ser int (se le pasa el ID)
     expire = datetime.now(timezone.utc) + (expires_delta)
     to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc)})
     encoded_jwt = jwt.encode(to_encode, os.getenv("SECRET_KEY"))
     return encoded_jwt
 
-async def get_username(token: str = Depends(oauth2_scheme)):
+async def decode_token(token: str = Depends(oauth2_scheme)):
     try:
-        payload = jwt.decode(token, os.getenv("SECRET_KEY"))
-        username: str = payload.get("sub")
-    except JWTError:
+        decoded_token = jwt.decode(token, os.getenv("SECRET_KEY"))
+        decoded_token["sub"] = int(decoded_token["sub"])
+    except JWTError as e:
+        #print(f"DEBUG JWT: {e}")
         return None
 
-    return username
+    return decoded_token

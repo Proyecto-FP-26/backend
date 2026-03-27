@@ -1,91 +1,23 @@
-from typing_extensions import Annotated
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-from sqlalchemy import select
 from app.db.database import get_db
-from app.models.user import User
 from app.schemas.auth import UserLogin, UserResponse
-from app.core.security import verify_password, create_access_token, get_username
-from datetime import timedelta
+from app.services.auth import get_current_user, authenticate_user
 from fastapi.security import OAuth2PasswordRequestForm
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/login")
 async def auth_login(auth_data: UserLogin, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(User).where(User.username == auth_data.username)
-    )
+    return await authenticate_user(auth_data = auth_data, db=db)
 
-    user = result.scalar_one_or_none()
 
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciales inválidas"
-        )
-
-    if not verify_password(auth_data.password, user.passwordHash):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciales inválidas"
-        )
-    
-    access_token = create_access_token(
-        data={"sub": user.username, "role": user.role.value},
-        expires_delta=timedelta(minutes=30)
-    )
-
-    return {"access_token": access_token, "token_type": "bearer"}
-
-@router.post("/token", include_in_schema=False) #TODO: Endpoint duplicado, extraer logica a otra función o revisar mezcla | Usado para login Swagger
+@router.post("/token", include_in_schema=False)
 async def auth_login(auth_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(User).where(User.username == auth_data.username)
-    )
+    #auth_data_login = UserLogin(username=auth_data.username, password=auth_data.password)
+    return await authenticate_user(auth_data = UserLogin(**auth_data.__dict__), db=db)
 
-    user = result.scalar_one_or_none()
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciales inválidas"
-        )
-
-    if not verify_password(auth_data.password, user.passwordHash):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciales inválidas"
-        )
-    
-    access_token = create_access_token(
-        data={"sub": user.username, "role": user.role.value},
-        expires_delta=timedelta(minutes=30)
-    )
-
-    return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/me", response_model=UserResponse)
-async def get_current_user(current_user=Depends(get_username), db: AsyncSession = Depends(get_db)):
-
-    if not current_user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No autorizado"
-        )
-    
-    result = await db.execute(
-        select(User).where(User.username == current_user)
-    )
-
-    user = result.scalar_one_or_none()
-
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    return user
+async def get_current_user(current_user=Depends(get_current_user)):
+    return current_user
