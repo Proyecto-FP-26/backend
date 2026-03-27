@@ -1,11 +1,12 @@
 from __future__ import annotations #Se utiliza para permitir anotaciones de tipo que se refieren a clases que aún no han sido definidas en el código.
 
-from sqlalchemy import func, String, DateTime, Enum as SQLEnum
+from sqlalchemy import func, String, DateTime, Enum as SQLEnum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from typing import List
 from datetime import datetime
 from enum import Enum
+import uuid
 
 from app.db.database import Base
 
@@ -33,3 +34,19 @@ class User(Base):
     notifications: Mapped[List[Notification]] = relationship(back_populates="user")
     points_entries: Mapped[List[Points]] = relationship(back_populates="user")
     logs: Mapped[List[Log]] = relationship(back_populates="user")
+    sessions: Mapped[List[UserSession]] = relationship(back_populates="user")
+
+class UserSession(Base):
+    __tablename__ = "users_sessions"
+    __table_args__ = {"schema": "auth"}
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    userId: Mapped[int] = mapped_column(ForeignKey("auth.users.id"), nullable=False)
+    jti: Mapped[str] = mapped_column(String(36), default=lambda: str(uuid.uuid4()), unique=True, nullable=False)
+    deviceInfo: Mapped[str] = mapped_column(nullable=False)
+    isRevoked: Mapped[bool] = mapped_column(default=False, nullable=False)
+    rememberMe: Mapped[bool] = mapped_column(default=False, nullable=False)
+    createdAt: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    expiresAt: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+    user: Mapped[User] = relationship("User", back_populates="sessions", foreign_keys= [userId])
