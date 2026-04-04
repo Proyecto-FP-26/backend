@@ -7,6 +7,7 @@ from app.schemas.auth import UserLogin
 from app.core.security import verify_password, create_access_token
 from app.core.security import oauth2_scheme, decode_token
 from datetime import timedelta
+from app.core.settings import settings
 
 no_autenticado = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -21,7 +22,7 @@ sin_credenciales = HTTPException(
 
 async def get_current_user(request: Request, token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)):
     if not token: #TODO: Separar esta logica para que no se repita en cada endpoint protegido (dependencies/auth.py)
-        cookie_token = request.cookies.get("access_token")
+        cookie_token = request.cookies.get(settings.ACCESS_COOKIE_NAME)
         if cookie_token:
             token = cookie_token
         else:
@@ -64,7 +65,7 @@ async def authenticate_user(auth_data: UserLogin, db: AsyncSession, response: Re
     )
 
     response.set_cookie(
-            key="access_token",
+            key=settings.ACCESS_COOKIE_NAME,
             value=access_token,
             httponly=True,   # <-- ¡CRÍTICO! Impide que JS lea la cookie (Seguridad)
             max_age=3600,    # Expira en 1 hora (en segundos)
@@ -74,4 +75,4 @@ async def authenticate_user(auth_data: UserLogin, db: AsyncSession, response: Re
             path="/",        # Disponible en toda la app
         )
 
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {settings.ACCESS_COOKIE_NAME: access_token, "token_type": "bearer"}
