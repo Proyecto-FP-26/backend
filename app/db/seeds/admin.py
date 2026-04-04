@@ -1,17 +1,14 @@
-import os
-from dotenv import load_dotenv
+from app.core.settings import settings
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.models.user import User, UserRole
 from app.core.security import hash_password
 
-load_dotenv()
-
 async def seed_admin(db: AsyncSession) -> None:
-    username = os.getenv("ADMIN_USERNAME")
-    email = os.getenv("ADMIN_EMAIL")
-    password = os.getenv("ADMIN_PASSWORD")
+    username = settings.ADMIN_USERNAME
+    email = settings.ADMIN_EMAIL
+    password = settings.ADMIN_PASSWORD
 
     result = await db.execute(select(User).where(User.username == username))
     if result.scalar_one_or_none():
@@ -27,4 +24,3 @@ async def seed_admin(db: AsyncSession) -> None:
 
     db.add(admin)
     await db.commit()
-    print("Admin creado")

@@ -3,12 +3,9 @@ from fastapi import Depends
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError
-from dotenv import load_dotenv
-import os
+from app.core.settings import settings
 
-load_dotenv()
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token") #https://fastapi.tiangolo.com/es/tutorial/security/simple-oauth2/ | https://cosasdedevs.com/posts/autenticacion-login-jwt-fastapi/
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token", auto_error=False) #https://fastapi.tiangolo.com/es/tutorial/security/simple-oauth2/ | https://cosasdedevs.com/posts/autenticacion-login-jwt-fastapi/
 
 pwd_context = CryptContext(
     schemes=["bcrypt"],
@@ -26,12 +23,12 @@ def create_access_token(data: dict, expires_delta: timedelta = timedelta(minutes
     to_encode["sub"] = str(to_encode["sub"]) #Sub no puede ser int (se le pasa el ID)
     expire = datetime.now(timezone.utc) + (expires_delta)
     to_encode.update({"exp": expire, "iat": datetime.now(timezone.utc)})
-    encoded_jwt = jwt.encode(to_encode, os.getenv("SECRET_KEY"))
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY)
     return encoded_jwt
 
 async def decode_token(token: str = Depends(oauth2_scheme)):
     try:
-        decoded_token = jwt.decode(token, os.getenv("SECRET_KEY"))
+        decoded_token = jwt.decode(token, settings.SECRET_KEY)
         decoded_token["sub"] = int(decoded_token["sub"])
     except JWTError as e:
         #print(f"DEBUG JWT: {e}")
