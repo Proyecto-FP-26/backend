@@ -12,11 +12,7 @@ Este proyecto expone una API con FastAPI que:
 
 ---
 
-<<<<<<< HEAD
-## Crear la base de datos postgresql en docker
-=======
 ## Crear la base de datos PostgreSQL en Docker
->>>>>>> dev
 
 Ejecutar en consola, teniendo [**Docker Desktop**](https://www.docker.com/products/docker-desktop/) instalado (en caso de Windows)
 
