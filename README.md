@@ -73,3 +73,13 @@ Esto ejecutará la aplicación en `http://127.0.0.1:8000/`
 ```bash
 uv run uvicorn app.main:app --reload
 ```
+
+---
+
+## Crear reportes de prueba
+
+Se pueden crear reportes para pruebas y tener datos para consumir. Se crean `n` reportes, con un usuario nuevo y una nueva categoría. Por defecto se crean 5 reportes.
+
+```bash
+uv run python -m scripts.manage reports [--n <integer>]
+```
