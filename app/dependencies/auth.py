@@ -7,39 +7,38 @@ from app.core.security import oauth2_scheme, decode_token
 from app.core.settings import settings
 from app.core.errors import NO_AUTENTICADO
 
-async def get_current_user(request: Request, token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)):
-    payload = _get_token_payload(request, token)
+class Get_Current_User:
+    def __init__(self, cookie_name: str = settings.ACCESS_COOKIE_NAME):
+        self.cookie_name = cookie_name
 
-    user = await _get_user_from_payload(payload.get("sub"), db)
-    
-    return user
+    async def __call__(self, request: Request, token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)):
+        payload = self._get_token_payload(request, token)
 
-async def get_current_user_jti(request: Request, token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)):
-    payload = await _get_token_payload(request, token)
+        user = await self._get_user_from_payload(payload.get("sub"), db)
+        jti = payload.get("jti")
 
-    user = await _get_user_from_payload(payload.get("sub"), db)
-    
-    return user, payload.get("jti")
+        #TODO: Verificar que el type del token sea el correcto
 
-#Auxiliar
-def _get_token_payload(request: Request, token: str | None = None):
-    if not token: 
-        cookie_token = request.cookies.get(settings.ACCESS_COOKIE_NAME)
-        if cookie_token:
-            token = cookie_token
-        else:
+        return user, jti
+
+    def _get_token_payload(self, request: Request, token: str):
+        if not token: 
+            cookie_token = request.cookies.get(self.cookie_name)
+            if cookie_token:
+                token = cookie_token
+            else:
+                raise NO_AUTENTICADO
+            
+        return decode_token(token)
+
+    async def _get_user_from_payload(self, user_id: str, db: AsyncSession):   
+        result = await db.execute(
+            select(User).where(User.id == user_id)
+        )
+        
+        user = result.scalar_one_or_none()
+
+        if not user:
             raise NO_AUTENTICADO
         
-    return decode_token(token)
-
-async def _get_user_from_payload(user_id: str, db: AsyncSession):   
-    result = await db.execute(
-        select(User).where(User.id == user_id)
-    )
-    
-    user = result.scalar_one_or_none()
-
-    if not user:
-        raise NO_AUTENTICADO
-    
-    return user
+        return user

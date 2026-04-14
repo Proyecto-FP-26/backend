@@ -36,10 +36,23 @@ async def refresh_tokens(user_jti: Tuple[User, str], db: AsyncSession, response:
     session = result.scalar_one_or_none()
 
     if session:
+        if session.isRevoked: #Si el jti enviado estaba revokado, no se crean nuevos tokens
+            raise SIN_CREDENCIALES
         session.isRevoked = True
         await db.commit()
     
     return await _create_auth(response, request, db, user)
+
+async def logout_user(jti: str, db: AsyncSession, response: Response):
+    result = await db.execute(select(UserSession).where(UserSession.jti == jti))
+    session = result.scalar_one_or_none()
+
+    if session:
+        session.isRevoked = True
+        await db.commit()
+    
+    response.delete_cookie(key=settings.ACCESS_COOKIE_NAME)
+    response.delete_cookie(key=settings.REFRESH_COOKIE_NAME, path="/auth/refresh")
 
 async def _create_auth(response: Response, request: Request, db: AsyncSession, user: User):
     #Buscar si hay sesiones abiertas para este usuario (y dispositivo) para cerrarlas
@@ -88,7 +101,7 @@ async def _create_auth(response: Response, request: Request, db: AsyncSession, u
             #expires=datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
             samesite="lax",
             secure=False,
-            path="/",
+            path="/"
         )
     
     response.set_cookie(
@@ -99,7 +112,7 @@ async def _create_auth(response: Response, request: Request, db: AsyncSession, u
             #expires=datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
             samesite="lax",
             secure=False,
-            path="/auth/refresh",
+            path="/auth/refresh"
         )
     
-    return {settings.ACCESS_COOKIE_NAME: access_token, settings.REFRESH_COOKIE_NAME: refresh_token, "token_type": "bearer"}
+    return {settings.ACCESS_COOKIE_NAME: access_token, settings.REFRESH_COOKIE_NAME: refresh_token, "token_type": "Bearer"}
