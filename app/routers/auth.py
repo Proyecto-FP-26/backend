@@ -9,8 +9,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/login", response_model=LoginResponse)
-async def auth_login(response: Response, auth_data: UserLogin, db: AsyncSession = Depends(get_db)):
-    return await authenticate_user(auth_data = auth_data, db=db, response=response)
+async def auth_login(response: Response, request: Request, auth_data: UserLogin, db: AsyncSession = Depends(get_db)):
+    return await authenticate_user(auth_data = auth_data, db=db, response=response, request=request)
 
 
 @router.post("/token", include_in_schema=False)
