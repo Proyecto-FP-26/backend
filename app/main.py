@@ -30,6 +30,6 @@ if settings.BACKEND_CORS_ORIGINS:
 app.include_router(reports_router)
 app.include_router(auth_router)
 
-@app.get("/")
+@app.get("/", include_in_schema=False)
 async def root():
     return {"status": "ok", "message": "Check API Docs at /docs or /redoc"}

@@ -3,8 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy import select
 from app.db.database import get_db
-from app.models.report import Report
-from app.schemas.report import ReportCreate, ReportUpdate, ReportResponse, PaginatedReportsResponse
+from app.models.report import Report, ReportCategory, ReportPriority
+from app.schemas.report import *
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
@@ -12,8 +12,20 @@ def report_with_relations(): #Se cargan las relaciones desde el modelo
     return [
         selectinload(Report.user), #selectinload carga la relación en la misma consulta(Pero ejecuta más de una query) : Select * from report; Select * from user where user.id in (1,2,3)
         selectinload(Report.resolvedBy),
+        selectinload(Report.category)
     ]
 #joinedload carga la relación con un join (Una sola consulta, pero puede traer datos duplicados) : Select * from report join user on report.userId = user.id 
+
+@router.get("/category-list", response_model=ReportCategoriesResponse)
+async def get_report_categories(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(ReportCategory))
+    categories = result.scalars().all()
+
+    return ReportCategoriesResponse(categories=categories)
+
+@router.get("/priority-list", response_model=list[ReportPriority])
+async def get_report_priorities():
+    return list(ReportPriority)
 
 @router.get("/", response_model=PaginatedReportsResponse)
 async def get_reports(page: int = Query(1, ge=1, description="Pagina actual"),
@@ -32,7 +44,7 @@ async def get_reports(page: int = Query(1, ge=1, description="Pagina actual"),
         reports=reports
     )
 
-@router.get("/{report_id}", response_model=ReportResponse)
+@router.get("/id/{report_id}", response_model=ReportResponse)
 async def get_report(report_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(Report)
@@ -65,7 +77,7 @@ async def create_report(report_data: ReportCreate, db: AsyncSession = Depends(ge
     )
     return result.scalar_one() 
 
-@router.patch("/{report_id}", response_model=ReportResponse)
+@router.patch("/id/{report_id}", response_model=ReportResponse)
 async def update_report(report_id: int, report_data: ReportUpdate, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(Report)

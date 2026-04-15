@@ -30,9 +30,7 @@ class ReportResponse(BaseModel):
     longitude: float
     status: ReportStatus
     priority: ReportPriority
-    userId: int
-    resolvedById: int | None
-    categoryId: int
+    category: ReportCategoryResponse
     createdAt: datetime
     updatedAt: datetime
     user: UserBasicResponse | None = None
@@ -45,7 +43,34 @@ class PaginatedReportsResponse(BaseModel):
     page_size: int
     reports: list[ReportResponse]
 
+class ReportCategoriesResponse(BaseModel):
+    categories: list[ReportCategoryResponse] | None = None
+
+class ReportCategoryResponse(BaseModel):
+    id: int
+    name: str
+    description: str | None = None
+    icon: str | None = None
+
+    model_config = {"from_attributes": True}
+
 class ReportCategoryCreate(BaseModel):
     name: str
     description: str | None = None
     icon: str | None = None
+
+class ReportCategoryUpdate(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    icon: str | None = None
+
+class ReportCategoryCreate(BaseModel):
+    name: str
+    description: str | None = None
+    icon: str | None = None
+
+class ReportStatusResponse(BaseModel):
+    id: int
+    name: str
+
+    model_config = {"from_attributes": True}
