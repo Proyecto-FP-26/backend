@@ -18,7 +18,9 @@ class Get_Current_User:
         jti = payload.get("jti")
 
         #Verificar que el type del token sea el correcto
-        if not (payload.get("type") == "access" and self.cookie_name == settings.ACCESS_COOKIE_NAME) or not (payload.get("type") == "refresh" and self.cookie_name == settings.REFRESH_COOKIE_NAME):
+        is_valid_access = payload.get("type") == "access" and self.cookie_name == settings.ACCESS_COOKIE_NAME
+        is_valid_refresh = payload.get("type") == "refresh" and self.cookie_name == settings.REFRESH_COOKIE_NAME
+        if not (is_valid_access or is_valid_refresh):
             raise NO_AUTENTICADO
         
         await self._verify_jti(jti, db)
