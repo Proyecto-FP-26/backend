@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy import select
 from app.db.database import get_db
 from app.models.report import Report, ReportCategory, ReportPriority
 from app.schemas.report import *
+from app.services.reports import get_all_reports, get_report_by_id
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
@@ -28,15 +29,11 @@ async def get_report_priorities():
     return list(ReportPriority)
 
 @router.get("/", response_model=PaginatedReportsResponse)
-async def get_reports(page: int = Query(1, ge=1, description="Pagina actual"),
+async def get_reports(response: Response, page: int = Query(1, ge=1, description="Pagina actual"),
     page_size: int = Query(10, ge=1, description="Cantidad de registros por pagina"),
     db: AsyncSession = Depends(get_db)):
-    offset = (page - 1) * page_size 
 
-    result = await db.execute(
-        select(Report).options(*report_with_relations()).offset(offset).limit(page_size).order_by(Report.id)) #Se añaden las relaciones con options y se descomprime la lista con * (convierte el array en argumentos separados) | offset y limit para paginación
-
-    reports = result.scalars().all() #Todos en una lista
+    reports = await get_all_reports(response, page, page_size, db)
 
     return PaginatedReportsResponse(
         page=page,
@@ -45,21 +42,8 @@ async def get_reports(page: int = Query(1, ge=1, description="Pagina actual"),
     )
 
 @router.get("/id/{report_id}", response_model=ReportResponse)
-async def get_report(report_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(Report)
-        .options(*report_with_relations())
-        .where(Report.id == report_id)
-    )
-    report = result.scalar_one_or_none() #Un resultado o None
-
-    if not report:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Report {report_id} no encontrado"
-        )
-
-    return report
+async def get_report(response: Response, report_id: int, db: AsyncSession = Depends(get_db)):
+    return await get_report_by_id(response, report_id, db)
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=ReportResponse)
 async def create_report(report_data: ReportCreate, db: AsyncSession = Depends(get_db)):
