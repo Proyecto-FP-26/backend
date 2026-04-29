@@ -5,7 +5,7 @@ from sqlalchemy import select
 from app.db.database import get_db
 from app.models.report import Report, ReportCategory, ReportPriority
 from app.schemas.report import *
-from app.services.reports import get_all_reports, get_report_by_id
+from app.services.reports import create_new_report, get_all_reports, get_report_by_id, delete_report_by_id, update_report_by_id
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
@@ -47,63 +47,14 @@ async def get_report(response: Response, report_id: int, db: AsyncSession = Depe
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=ReportResponse)
 async def create_report(report_data: ReportCreate, db: AsyncSession = Depends(get_db)):
-    new_report = Report(**report_data.model_dump()) #Convierte ReportCreate a diccionario y lo pasa al constructor de Report
+    return await create_new_report(report_data, db)
 
-    db.add(new_report) #pendiente enviar db
-    await db.commit() #confirma y guarda en db
-    await db.refresh(new_report) #actualiza con los datos de la db generados automaticamente
-
-    #refresh no carga relaciones, hay que recargar con selectinload
-    result = await db.execute(
-        select(Report)
-        .options(*report_with_relations())
-        .where(Report.id == new_report.id)
-    )
-    return result.scalar_one() 
 
 @router.patch("/id/{report_id}", response_model=ReportResponse)
 async def update_report(report_id: int, report_data: ReportUpdate, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(Report)
-        .where(Report.id == report_id)
-    )
-    report = result.scalar_one_or_none()
-
-    if not report:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Report {report_id} no encontrado"
-        )
-
-    update_data = report_data.model_dump(exclude_unset=True) #model_dump: convierte el modelo en un diccionario | exclude_unset : Actualiza solo los campos que vienen en el body, ignora los None (sin esto, actualizaría todos los campos no enviados a None (valor por defecto de ReportUpdate))
-    for field, value in update_data.items():
-        setattr(report, field, value)
-
-    await db.commit()
-    #await db.refresh(report)
-
-    result = await db.execute(
-        select(Report)
-        .options(*report_with_relations())
-        .where(Report.id == report_id)
-    )
-    return result.scalar_one()
+    return await update_report_by_id(report_id, report_data, db)
 
 @router.delete("/id/{report_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_report(report_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(Report)
-        .where(Report.id == report_id)
-    )
-    report = result.scalar_one_or_none()
-
-    if not report:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Report {report_id} no encontrado"
-        )
-
-    await db.delete(report)
-    await db.commit()
-
+    await delete_report_by_id(report_id, db)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
