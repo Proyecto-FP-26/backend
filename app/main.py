@@ -7,6 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.routers.reports import router as reports_router
 from app.routers.auth import router as auth_router
+from app.routers.reports_categories import router as reports_categories_router
 
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.settings import settings
@@ -35,6 +36,7 @@ if settings.BACKEND_CORS_ORIGINS:
     )
 
 app.include_router(reports_router)
+app.include_router(reports_categories_router)
 app.include_router(auth_router)
 
 #Captura de errores | https://fastapi.tiangolo.com/tutorial/handling-errors/#install-custom-exception-handlers

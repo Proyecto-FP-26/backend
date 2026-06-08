@@ -17,16 +17,16 @@ def report_with_relations(): #Se cargan las relaciones desde el modelo
     ]
 #joinedload carga la relación con un join (Una sola consulta, pero puede traer datos duplicados) : Select * from report join user on report.userId = user.id 
 
-@router.get("/category-list", response_model=ReportCategoriesResponse)
+'''@router.get("/category-list", response_model=ReportCategoriesResponse)
 async def get_report_categories(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(ReportCategory))
     categories = result.scalars().all()
 
-    return ReportCategoriesResponse(categories=categories)
+    return ReportCategoriesResponse(categories=categories)'''
 
-@router.get("/priority-list", response_model=list[ReportPriority])
+'''@router.get("/priority-list", response_model=list[ReportPriority])
 async def get_report_priorities():
-    return list(ReportPriority)
+    return list(ReportPriority)'''
 
 @router.get("/", response_model=PaginatedReportsResponse)
 async def get_reports(response: Response, page: int = Query(1, ge=1, description="Pagina actual"),
@@ -41,20 +41,20 @@ async def get_reports(response: Response, page: int = Query(1, ge=1, description
         reports=reports
     )
 
-@router.get("/id/{report_id}", response_model=ReportResponse)
-async def get_report(response: Response, report_id: int, db: AsyncSession = Depends(get_db)):
-    return await get_report_by_id(response, report_id, db)
+@router.get("/{id}", response_model=ReportResponse)
+async def get_report(response: Response, id: int, db: AsyncSession = Depends(get_db)):
+    return await get_report_by_id(response, id, db)
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=ReportResponse)
 async def create_report(report_data: ReportCreate, db: AsyncSession = Depends(get_db)):
     return await create_new_report(report_data, db)
 
 
-@router.patch("/id/{report_id}", response_model=ReportResponse)
-async def update_report(report_id: int, report_data: ReportUpdate, db: AsyncSession = Depends(get_db)):
-    return await update_report_by_id(report_id, report_data, db)
+@router.patch("/{id}", response_model=ReportResponse)
+async def update_report(id: int, report_data: ReportUpdate, db: AsyncSession = Depends(get_db)):
+    return await update_report_by_id(id, report_data, db)
 
-@router.delete("/id/{report_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_report(report_id: int, db: AsyncSession = Depends(get_db)):
-    await delete_report_by_id(report_id, db)
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_report(id: int, db: AsyncSession = Depends(get_db)):
+    await delete_report_by_id(id, db)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
