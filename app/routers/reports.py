@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 from sqlalchemy import select
 from app.db.database import get_db
 from app.models.report import Report, ReportCategory, ReportPriority
@@ -9,31 +8,14 @@ from app.services.reports import create_new_report, get_all_reports, get_report_
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
-def report_with_relations(): #Se cargan las relaciones desde el modelo
-    return [
-        selectinload(Report.user), #selectinload carga la relación en la misma consulta(Pero ejecuta más de una query) : Select * from report; Select * from user where user.id in (1,2,3)
-        selectinload(Report.resolvedBy),
-        selectinload(Report.category)
-    ]
-#joinedload carga la relación con un join (Una sola consulta, pero puede traer datos duplicados) : Select * from report join user on report.userId = user.id 
-
-'''@router.get("/category-list", response_model=ReportCategoriesResponse)
-async def get_report_categories(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(ReportCategory))
-    categories = result.scalars().all()
-
-    return ReportCategoriesResponse(categories=categories)'''
-
-'''@router.get("/priority-list", response_model=list[ReportPriority])
-async def get_report_priorities():
-    return list(ReportPriority)'''
-
 @router.get("/", response_model=PaginatedReportsResponse)
 async def get_reports(response: Response, page: int = Query(1, ge=1, description="Pagina actual"),
     page_size: int = Query(10, ge=1, description="Cantidad de registros por pagina"),
     db: AsyncSession = Depends(get_db)):
 
-    reports = await get_all_reports(response, page, page_size, db)
+    reports, total_items = await get_all_reports(page, page_size, db)
+
+    await _set_pagination_header(response, page_size, total_items) #Añadir a la cabecera el total paginas e items
 
     return PaginatedReportsResponse(
         page=page,
@@ -42,8 +24,8 @@ async def get_reports(response: Response, page: int = Query(1, ge=1, description
     )
 
 @router.get("/{id}", response_model=ReportResponse)
-async def get_report(response: Response, id: int, db: AsyncSession = Depends(get_db)):
-    return await get_report_by_id(response, id, db)
+async def get_report(id: int, db: AsyncSession = Depends(get_db)):
+    return await get_report_by_id(id, db)
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=ReportResponse)
 async def create_report(report_data: ReportCreate, db: AsyncSession = Depends(get_db)):
@@ -69,3 +51,8 @@ async def upload_report_image(id: int):
 async def get_report_images(id: int):
     #TODO: Lógica para obtener las imágenes asociadas al reporte
     return [f"https://example.com/reports/{id}/images/1.jpg", f"https://example.com/reports/{id}/images/2.jpg"]
+
+async def _set_pagination_header(response: Response, page_size: int, total: int):
+    #Añadir a la cabecera el total paginas e items
+    response.headers["X-Total-Pages"] = str((total + page_size - 1) // page_size)
+    response.headers["X-Total-Items"] = str(total)
