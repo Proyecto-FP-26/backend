@@ -2,7 +2,7 @@ from fastapi import HTTPException, status, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy import select, func
-from app.models.report import Report
+from app.models.report import Report, ReportImage
 from app.schemas.report import *
 from app.core.settings import settings
 from pathlib import Path
@@ -115,7 +115,8 @@ async def delete_report_by_id(report_id: int, db: AsyncSession):
     await db.commit()
 
 async def save_files(files: list[UploadFile], report_id: int, user_id: int, db: AsyncSession):
-    save_files = []
+    saved_files: list[Path] = []
+    db_objects: list[ReportImage] = []
 
     #Crear carpetas
     user_folder = Path(uploads_root) / f"{user_id}"
@@ -133,13 +134,23 @@ async def save_files(files: list[UploadFile], report_id: int, user_id: int, db: 
             try:
                 copyfileobj(file.file, buffer)
             except Exception as e:
+                #Borrar imagenes ya guardadas
+                for saved_file in saved_files:
+                    if saved_file.exists():
+                        saved_file.unlink()
+
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"Error al guardar el archivo: {e}",
-                    saved_files=save_files #Devolver los archivos que se guardaron antes del error
+                    detail=f"Error al guardar el archivo: {e}"
                 ) 
             
-        #Guardar la ruta del archivo | TODO: Guardar en la base de datos la relación entre el reporte y la imagen
-        save_files.append(str(file_path))
+        #Guardar la ruta y preparar el objeto de base de datos
+        saved_files.append(str(file_path))
+        
+        new_image = ReportImage(reportId=report_id, imageUrl=str(file_path))
+        db_objects.append(new_image)
 
-    return save_files
+    db.add_all(db_objects)
+    await db.commit()
+
+    return saved_files
