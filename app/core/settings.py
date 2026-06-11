@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pathlib import Path
 
 class Settings(BaseSettings):
     BACKEND_CORS_ORIGINS: list[str] = []
@@ -20,6 +21,16 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int
     ACCESS_COOKIE_NAME: str
     REFRESH_COOKIE_NAME: str
+
+    MEDIA_ROOT: Path = Path("media/")
+    UPLOADS_ROOT: Path = MEDIA_ROOT / "uploads/"
+
+    #Crear carpetas si no existen
+    def __init__(self, **values):
+        super().__init__(**values)
+        self.MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
+        self.UPLOADS_ROOT.mkdir(parents=True, exist_ok=True)
+
 
     model_config = SettingsConfigDict(case_sensitive=True, env_file=".env") #extra="ignore" : Si se ponen variables en .env que no se quieren declarar aquí
 

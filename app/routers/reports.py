@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, status, Query, Response
+from fastapi import APIRouter, Depends, status, Query, Response, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.database import get_db
+from app.dependencies.auth import Get_Current_User
 from app.schemas.report import *
 from app.models.report import Report
-from app.services.reports import create_new_report, get_all_reports, get_report_by_id, delete_report_by_id, update_report_by_id
+from app.services.reports import create_new_report, get_all_reports, get_report_by_id, delete_report_by_id, update_report_by_id, save_files
 from app.dependencies.reports import valid_report_id
+
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
@@ -43,9 +45,10 @@ async def delete_report(id: int, db: AsyncSession = Depends(get_db)):
 
 #Imágenes
 @router.post("/{id}/images", status_code=status.HTTP_201_CREATED)
-async def upload_report_image(report: Report = Depends(valid_report_id), db: AsyncSession = Depends(get_db)):
-    #TODO: Lógica para subir la imagen y asociarla al reporte
-    return {"message": f"Imagen subida para el reporte {report.id}"}
+async def upload_report_image(file: UploadFile = File(...), report: Report = Depends(valid_report_id), db: AsyncSession = Depends(get_db), current_user=Depends(Get_Current_User())):
+    saved_files = await save_files([file], report.id, current_user[0].id, db)
+    return {"message": f"Imagen subida para el reporte {report.title} | {report.id}",
+            "saved_files": saved_files}
 
 @router.get("/{id}/images", response_model=list[str])
 async def get_report_images(report: Report = Depends(valid_report_id)):

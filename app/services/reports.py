@@ -1,9 +1,15 @@
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy import select, func
 from app.models.report import Report
 from app.schemas.report import *
+from app.core.settings import settings
+from pathlib import Path
+from uuid import uuid4
+from shutil import copyfileobj
+
+uploads_root = settings.UPLOADS_ROOT
 
 def report_with_relations(): #Se cargan las relaciones desde el modelo
     return [
@@ -107,3 +113,33 @@ async def delete_report_by_id(report_id: int, db: AsyncSession):
     
     await db.delete(report)
     await db.commit()
+
+async def save_files(files: list[UploadFile], report_id: int, user_id: int, db: AsyncSession):
+    save_files = []
+
+    #Crear carpetas
+    user_folder = Path(uploads_root) / f"{user_id}"
+    report_folder = user_folder / f"{report_id}"
+    user_folder.mkdir(parents=True, exist_ok=True)
+    report_folder.mkdir(parents=True, exist_ok=True)
+
+    #Guardar cada archivo
+    for file in files:
+        file_extension = Path(file.filename).suffix
+        unique_filename = f"{uuid4()}{file_extension}"
+        file_path = report_folder / unique_filename
+
+        with file_path.open("wb") as buffer:
+            try:
+                copyfileobj(file.file, buffer)
+            except Exception as e:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Error al guardar el archivo: {e}",
+                    saved_files=save_files #Devolver los archivos que se guardaron antes del error
+                ) 
+            
+        #Guardar la ruta del archivo | TODO: Guardar en la base de datos la relación entre el reporte y la imagen
+        save_files.append(str(file_path))
+
+    return save_files
