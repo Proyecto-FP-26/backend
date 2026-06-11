@@ -58,3 +58,14 @@ async def update_report(id: int, report_data: ReportUpdate, db: AsyncSession = D
 async def delete_report(id: int, db: AsyncSession = Depends(get_db)):
     await delete_report_by_id(id, db)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+#Imágenes
+@router.post("/{id}/images", status_code=status.HTTP_201_CREATED)
+async def upload_report_image(id: int):
+    #TODO: Lógica para subir la imagen y asociarla al reporte
+    return {"message": f"Imagen subida para el reporte {id}"}
+
+@router.get("/{id}/images", response_model=list[str])
+async def get_report_images(id: int):
+    #TODO: Lógica para obtener las imágenes asociadas al reporte
+    return [f"https://example.com/reports/{id}/images/1.jpg", f"https://example.com/reports/{id}/images/2.jpg"]

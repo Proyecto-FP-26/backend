@@ -1,10 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 from sqlalchemy import select
 from app.db.database import get_db
-from app.models.report import Report, ReportCategory, ReportPriority
-from app.schemas.report import *
+from app.models.report import ReportCategory
+from app.schemas.report_category import ReportCategoryCreate, ReportCategoryResponse, ReportCategoriesResponse
 from sqlalchemy.exc import IntegrityError
 
 router = APIRouter(prefix="/reports-categories", tags=["reports-categories"])

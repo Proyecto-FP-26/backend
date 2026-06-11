@@ -1,7 +1,8 @@
 from pydantic import BaseModel
 from datetime import datetime
 from app.models.report import ReportStatus, ReportPriority
-from app.schemas.user import UserResponse, UserBasicResponse
+from app.schemas.user import UserBasicResponse
+from app.schemas.report_category import ReportCategoryResponse
 
 class ReportCreate(BaseModel):
     title: str
@@ -42,32 +43,6 @@ class PaginatedReportsResponse(BaseModel):
     page: int
     page_size: int
     reports: list[ReportResponse]
-
-class ReportCategoriesResponse(BaseModel):
-    categories: list[ReportCategoryResponse] | None = None
-
-class ReportCategoryResponse(BaseModel):
-    id: int
-    name: str
-    description: str | None = None
-    icon: str | None = None
-
-    model_config = {"from_attributes": True}
-
-class ReportCategoryCreate(BaseModel):
-    name: str
-    description: str | None = None
-    icon: str | None = None
-
-class ReportCategoryUpdate(BaseModel):
-    name: str | None = None
-    description: str | None = None
-    icon: str | None = None
-
-class ReportCategoryCreate(BaseModel):
-    name: str
-    description: str | None = None
-    icon: str | None = None
 
 class ReportStatusResponse(BaseModel):
     id: int

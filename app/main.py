@@ -7,7 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.routers.reports import router as reports_router
 from app.routers.auth import router as auth_router
-from app.routers.reports_categories import router as reports_categories_router
+from app.routers.reports_category import router as reports_categories_router
 
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.settings import settings
