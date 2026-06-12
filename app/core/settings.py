@@ -25,11 +25,17 @@ class Settings(BaseSettings):
     MEDIA_ROOT: Path = Path("media/")
     UPLOADS_ROOT: Path = MEDIA_ROOT / "uploads/"
 
+    DEBUG: bool = False
+
     #Crear carpetas si no existen
     def __init__(self, **values):
         super().__init__(**values)
         self.MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
         self.UPLOADS_ROOT.mkdir(parents=True, exist_ok=True)
+
+    @property
+    def is_production(self) -> bool:
+        return not self.DEBUG
 
 
     model_config = SettingsConfigDict(case_sensitive=True, env_file=".env") #extra="ignore" : Si se ponen variables en .env que no se quieren declarar aquí

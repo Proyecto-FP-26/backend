@@ -102,7 +102,7 @@ async def _create_auth(response: Response, request: Request, db: AsyncSession, u
             max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
             #expires=datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
             samesite="lax",
-            secure=False,
+            secure=settings.is_production, #En producción debería ser True (la cookie solo funciona con https)
             path="/"
         )
     
@@ -113,7 +113,7 @@ async def _create_auth(response: Response, request: Request, db: AsyncSession, u
             max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
             #expires=datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
             samesite="lax",
-            secure=False,
+            secure=settings.is_production,
             path="/auth/refresh"
         )
     
