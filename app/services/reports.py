@@ -114,9 +114,10 @@ async def delete_report_by_id(report_id: int, db: AsyncSession):
     await db.delete(report)
     await db.commit()
 
-async def save_files(files: list[UploadFile], report_id: int, user_id: int, db: AsyncSession):
+async def save_images(files: list[UploadFile], report_id: int, user_id: int, db: AsyncSession):
     saved_files: list[Path] = []
     db_objects: list[ReportImage] = []
+    ALLOWED_MIMES = ["image/jpeg", "image/png", "image/webp"]
 
     #Crear carpetas
     user_folder = Path(uploads_root) / f"{user_id}"
@@ -130,6 +131,10 @@ async def save_files(files: list[UploadFile], report_id: int, user_id: int, db: 
         unique_filename = f"{uuid4()}{file_extension}"
         file_path = report_folder / unique_filename
         url_file_path = file_path.as_posix()
+
+        if file.content_type not in ALLOWED_MIMES:
+            saved_files.append(f"Archivo {file.filename} con tipo {file.content_type} no permitido") #TODO: Temporal, cambiar por mensaje de error o algo similar
+            continue #Ignorar archivos con tipo no permitido
 
         with file_path.open("wb") as buffer:
             try:
