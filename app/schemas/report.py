@@ -49,3 +49,11 @@ class ReportStatusResponse(BaseModel):
     name: str
 
     model_config = {"from_attributes": True}
+
+class ReportImagesResponse(BaseModel):
+    num_images: int
+    images: list[ImageSchema]
+
+class ImageSchema(BaseModel):
+    id: int
+    url: str

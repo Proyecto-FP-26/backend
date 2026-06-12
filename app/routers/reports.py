@@ -11,6 +11,11 @@ from app.dependencies.reports import valid_report_id
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
+async def _set_pagination_header(response: Response, page_size: int, total: int):
+    #Añadir a la cabecera el total paginas e items
+    response.headers["X-Total-Pages"] = str((total + page_size - 1) // page_size)
+    response.headers["X-Total-Items"] = str(total)
+
 @router.get("/", response_model=PaginatedReportsResponse)
 async def get_reports(response: Response, page: int = Query(1, ge=1, description="Pagina actual"),
     page_size: int = Query(10, ge=1, description="Cantidad de registros por pagina"),
@@ -51,11 +56,12 @@ async def upload_report_image(file: UploadFile = File(...), report: Report = Dep
     return {"message": f"Imagen subida para el reporte {report.title} | {report.id}",
             "saved_files": saved_files}
 
-@router.get("/{id}/images", response_model=list[str])
+@router.get("/{id}/images", response_model=ReportImagesResponse)
 async def get_report_images(report: Report = Depends(valid_report_id), db: AsyncSession = Depends(get_db)):
-    return await report_services.get_report_images(report.id, db)
+    images = await report_services.get_report_images(report.id, db)
+    return ReportImagesResponse(num_images=len(images), images=images)
 
-async def _set_pagination_header(response: Response, page_size: int, total: int):
-    #Añadir a la cabecera el total paginas e items
-    response.headers["X-Total-Pages"] = str((total + page_size - 1) // page_size)
-    response.headers["X-Total-Items"] = str(total)
+@router.delete("/{id}/image/{image_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_report_image(image_id: int, report: Report = Depends(valid_report_id), db: AsyncSession = Depends(get_db)):
+    await report_services.delete_report_image(report.id, image_id, db)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

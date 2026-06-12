@@ -159,4 +159,22 @@ async def save_files(files: list[UploadFile], report_id: int, user_id: int, db: 
 async def get_report_images(report_id: int, db: AsyncSession):
     result = await db.execute(select(ReportImage).where(ReportImage.reportId == report_id))
     images = result.scalars().all()
-    return [image.imageUrl for image in images]
+    return [ImageSchema(id=image.id, url=image.imageUrl) for image in images]
+
+async def delete_report_image(report_id: int, image_id: int, db: AsyncSession):
+    result = await db.execute(select(ReportImage).where(ReportImage.id == image_id, ReportImage.reportId == report_id))
+    image = result.scalar_one_or_none()
+
+    if not image:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Imagen {image_id} no encontrada para el reporte {report_id}"
+        )
+    
+    #Borrar el archivo de la imagen
+    file_path = Path(image.imageUrl)
+    if file_path.exists():
+        file_path.unlink()
+
+    await db.delete(image)
+    await db.commit()
