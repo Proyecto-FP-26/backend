@@ -19,7 +19,7 @@ async def auth_logout(response: Response, current_user=Depends(Get_Current_User(
     return {"message": "Sesión cerrada correctamente"}
 
 @router.post("/token", include_in_schema=False)
-async def auth_login(response: Response, request: Request, auth_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
+async def auth_token(response: Response, request: Request, auth_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
     #auth_data_login = UserLogin(username=auth_data.username, password=auth_data.password)
     return await authenticate_user(auth_data = UserLogin(**auth_data.__dict__), db=db, response=response, request=request)
 
