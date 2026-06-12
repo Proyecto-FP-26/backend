@@ -12,6 +12,8 @@ from app.routers.reports_category import router as reports_categories_router
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.settings import settings
 
+from fastapi.staticfiles import StaticFiles
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -34,6 +36,12 @@ if settings.BACKEND_CORS_ORIGINS:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+app.mount(
+    "/media",
+    StaticFiles(directory=settings.MEDIA_ROOT),
+    name="media"
+)
 
 app.include_router(reports_router)
 app.include_router(reports_categories_router)
