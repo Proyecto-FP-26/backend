@@ -154,3 +154,8 @@ async def save_files(files: list[UploadFile], report_id: int, user_id: int, db: 
     await db.commit()
 
     return saved_files
+
+async def get_report_images(report_id: int, db: AsyncSession):
+    result = await db.execute(select(ReportImage).where(ReportImage.reportId == report_id))
+    images = result.scalars().all()
+    return [image.imageUrl for image in images]

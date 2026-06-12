@@ -4,7 +4,8 @@ from app.db.database import get_db
 from app.dependencies.auth import Get_Current_User
 from app.schemas.report import *
 from app.models.report import Report
-from app.services.reports import create_new_report, get_all_reports, get_report_by_id, delete_report_by_id, update_report_by_id, save_files
+from app.services.reports import create_new_report, get_all_reports, get_report_by_id, delete_report_by_id, update_report_by_id, save_files, get_report_images
+from app.services import reports as report_services
 from app.dependencies.reports import valid_report_id
 
 
@@ -51,9 +52,8 @@ async def upload_report_image(file: UploadFile = File(...), report: Report = Dep
             "saved_files": saved_files}
 
 @router.get("/{id}/images", response_model=list[str])
-async def get_report_images(report: Report = Depends(valid_report_id)):
-    #TODO: Lógica para obtener las imágenes asociadas al reporte
-    return [f"https://example.com/reports/{report.id}/images/1.jpg", f"https://example.com/reports/{report.id}/images/2.jpg"]
+async def get_report_images(report: Report = Depends(valid_report_id), db: AsyncSession = Depends(get_db)):
+    return await report_services.get_report_images(report.id, db)
 
 async def _set_pagination_header(response: Response, page_size: int, total: int):
     #Añadir a la cabecera el total paginas e items
