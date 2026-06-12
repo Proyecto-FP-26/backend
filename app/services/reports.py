@@ -129,6 +129,7 @@ async def save_files(files: list[UploadFile], report_id: int, user_id: int, db: 
         file_extension = Path(file.filename).suffix
         unique_filename = f"{uuid4()}{file_extension}"
         file_path = report_folder / unique_filename
+        url_file_path = file_path.as_posix()
 
         with file_path.open("wb") as buffer:
             try:
@@ -145,9 +146,9 @@ async def save_files(files: list[UploadFile], report_id: int, user_id: int, db: 
                 ) 
             
         #Guardar la ruta y preparar el objeto de base de datos
-        saved_files.append(str(file_path))
+        saved_files.append(url_file_path)
         
-        new_image = ReportImage(reportId=report_id, imageUrl=str(file_path))
+        new_image = ReportImage(reportId=report_id, imageUrl=url_file_path)
         db_objects.append(new_image)
 
     db.add_all(db_objects)
