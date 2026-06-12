@@ -178,3 +178,17 @@ async def delete_report_image(report_id: int, image_id: int, db: AsyncSession):
 
     await db.delete(image)
     await db.commit()
+
+async def delete_all_report_images(report_id: int, db: AsyncSession):
+    result = await db.execute(select(ReportImage).where(ReportImage.reportId == report_id))
+    images = result.scalars().all()
+
+    for image in images:
+        #Borrar el archivo de la imagen
+        file_path = Path(image.imageUrl)
+        if file_path.exists():
+            file_path.unlink()
+
+        await db.delete(image)
+
+    await db.commit()

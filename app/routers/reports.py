@@ -50,7 +50,7 @@ async def delete_report(id: int, db: AsyncSession = Depends(get_db)):
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 #Imágenes
-@router.post("/{id}/images", status_code=status.HTTP_201_CREATED)
+@router.post("/{id}/images", status_code=status.HTTP_201_CREATED) #TODO: Añadir limites de cantidad y validaciones de tipo de archivo
 async def upload_report_image(file: UploadFile = File(...), report: Report = Depends(valid_report_id), db: AsyncSession = Depends(get_db), current_user=Depends(Get_Current_User())):
     saved_files = await save_files([file], report.id, current_user[0].id, db)
     return {"message": f"Imagen subida para el reporte {report.title} | {report.id}",
@@ -64,4 +64,9 @@ async def get_report_images(report: Report = Depends(valid_report_id), db: Async
 @router.delete("/{id}/image/{image_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_report_image(image_id: int, report: Report = Depends(valid_report_id), db: AsyncSession = Depends(get_db)):
     await report_services.delete_report_image(report.id, image_id, db)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+@router.delete("/{id}/images", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_all_report_images(report: Report = Depends(valid_report_id), db: AsyncSession = Depends(get_db)):
+    await report_services.delete_all_report_images(report.id, db)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
