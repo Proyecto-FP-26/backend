@@ -22,5 +22,6 @@ class UserResponse(BaseModel):
 class UserBasicResponse(BaseModel):
     id: int
     username: str
+    role: UserRole
 
     model_config = {"from_attributes": True}
