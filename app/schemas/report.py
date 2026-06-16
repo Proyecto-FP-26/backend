@@ -57,3 +57,15 @@ class ReportImagesResponse(BaseModel):
 class ImageSchema(BaseModel):
     id: int
     url: str
+
+class ReportCommentResponse(BaseModel):
+    id: int
+    content: str
+    createdAt: datetime
+    user: UserBasicResponse
+
+    model_config = {"from_attributes": True}
+
+class ReportCommentsResponse(BaseModel):
+    num_comments: int
+    comments: list[ReportCommentResponse]

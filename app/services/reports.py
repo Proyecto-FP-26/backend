@@ -2,7 +2,7 @@ from fastapi import HTTPException, status, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlalchemy import select, func
-from app.models.report import Report, ReportImage
+from app.models.report import Report, ReportImage, Comment as ReportComment
 from app.schemas.report import *
 from app.core.settings import settings
 from pathlib import Path
@@ -196,4 +196,45 @@ async def delete_all_report_images(report_id: int, db: AsyncSession):
 
         await db.delete(image)
 
+    await db.commit()
+
+#Comentarios
+async def get_report_comments(report_id: int, db: AsyncSession):
+    result = await db.execute(
+        select(ReportComment)
+        .where(ReportComment.reportId == report_id)
+        .options(selectinload(ReportComment.user))
+    )
+    comments = result.scalars().all()
+    return comments
+
+async def create_report_comment(report_id: int, comment_data: str, user_id: int, db: AsyncSession):
+    new_comment = ReportComment(reportId=report_id, content=comment_data, userId=user_id)
+    db.add(new_comment)
+    await db.commit()
+    await db.refresh(new_comment)
+
+    result = await db.execute(
+        select(ReportComment)
+        .where(ReportComment.id == new_comment.id)
+        .options(selectinload(ReportComment.user))
+    )
+    comment = result.scalar_one()
+
+    return comment
+
+async def delete_report_comment(report_id: int, comment_id: int, user_id: int, db: AsyncSession):
+    result = await db.execute(
+        select(ReportComment)
+        .where(ReportComment.id == comment_id, ReportComment.reportId == report_id, ReportComment.userId == user_id)
+    )
+    comment = result.scalar_one_or_none()
+
+    if not comment:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Comentario {comment_id} no encontrado para el reporte {report_id} y usuario {user_id}"
+        )
+    
+    await db.delete(comment)
     await db.commit()

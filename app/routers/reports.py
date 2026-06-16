@@ -43,7 +43,7 @@ async def create_report(report_data: ReportCreate, db: AsyncSession = Depends(ge
 async def update_report(id: int, report_data: ReportUpdate, db: AsyncSession = Depends(get_db)):
     return await report_services.update_report_by_id(id, report_data, db)
 
-@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT) #TODO: Al borrar un reporte, borrar sus imagenes y comentarios asociados
 async def delete_report(id: int, db: AsyncSession = Depends(get_db)):
     await report_services.delete_report_by_id(id, db)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -69,3 +69,20 @@ async def delete_report_image(image_id: int, report: Report = Depends(report_dep
 async def delete_all_report_images(report: Report = Depends(report_dependencies.valid_report_id), db: AsyncSession = Depends(get_db)):
     await report_services.delete_all_report_images(report.id, db)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+#Comentarios
+@router.get("/{id}/comments", response_model=ReportCommentsResponse)
+async def get_report_comments(report: Report = Depends(report_dependencies.valid_report_id), db: AsyncSession = Depends(get_db)):
+    comments = await report_services.get_report_comments(report.id, db)
+    return ReportCommentsResponse(num_comments=len(comments), comments=comments)
+
+@router.post("/{id}/comments", status_code=status.HTTP_201_CREATED, response_model=ReportCommentResponse)
+async def create_report_comment(comment_data: str, report: Report = Depends(report_dependencies.valid_report_id), db: AsyncSession = Depends(get_db), current_user=Depends(auth_dependencies.Get_Current_User())):
+    comment = await report_services.create_report_comment(report.id, comment_data, current_user[0].id, db)
+    return comment
+
+@router.delete("/{id}/comments/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_report_comment(comment_id: int, report: Report = Depends(report_dependencies.valid_report_id), db: AsyncSession = Depends(get_db), current_user=Depends(auth_dependencies.Get_Current_User())):
+    await report_services.delete_report_comment(report.id, comment_id, current_user[0].id, db)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
