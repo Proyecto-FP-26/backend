@@ -20,21 +20,28 @@ def report_with_relations(): #Se cargan las relaciones desde el modelo
 #joinedload carga la relación con un join (Una sola consulta, pero puede traer datos duplicados) : Select * from report join user on report.userId = user.id 
 
 async def get_all_reports(page: int, page_size: int, db: AsyncSession):
-    offset = (page - 1) * page_size 
-
     #Obtener el total de registros
     count_query = select(func.count()).select_from(Report)
     total_result = await db.execute(count_query)
     total = total_result.scalar() or 0
+    
+    if page == 0 or page_size == 0:
+        main_query = (
+            select(Report)
+            .options(*report_with_relations())
+            .order_by(Report.id)
+        )
+    else:
+        offset = (page - 1) * page_size 
 
-    #Obtener los registros paginados con relaciones
-    main_query = (
-        select(Report)
-        .options(*report_with_relations())
-        .offset(offset)
-        .limit(page_size)
-        .order_by(Report.id)
-    )
+        #Obtener los registros paginados con relaciones
+        main_query = (
+            select(Report)
+            .options(*report_with_relations())
+            .offset(offset)
+            .limit(page_size)
+            .order_by(Report.id)
+        )
     result = await db.execute(main_query)
 
     reports = result.scalars().all() #Todos en una lista

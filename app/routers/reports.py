@@ -12,12 +12,15 @@ router = APIRouter(prefix="/reports", tags=["reports"])
 
 async def _set_pagination_header(response: Response, page_size: int, total: int):
     #Añadir a la cabecera el total paginas e items
-    response.headers["X-Total-Pages"] = str((total + page_size - 1) // page_size)
+    if page_size == 0:
+        response.headers["X-Total-Pages"] = str(1)
+    else:
+        response.headers["X-Total-Pages"] = str((total + page_size - 1) // page_size)
     response.headers["X-Total-Items"] = str(total)
 
 @router.get("/", response_model=PaginatedReportsResponse)
-async def get_reports(response: Response, page: int = Query(1, ge=1, description="Pagina actual"),
-    page_size: int = Query(10, ge=1, description="Cantidad de registros por pagina"),
+async def get_reports(response: Response, page: int = Query(0, ge=0, description="Pagina actual"),
+    page_size: int = Query(0, ge=0, description="Cantidad de registros por pagina"),
     db: AsyncSession = Depends(get_db)):
 
     reports, total_items = await report_services.get_all_reports(page, page_size, db)
