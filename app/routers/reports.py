@@ -18,7 +18,7 @@ async def _set_pagination_header(response: Response, page_size: int, total: int)
         response.headers["X-Total-Pages"] = str((total + page_size - 1) // page_size)
     response.headers["X-Total-Items"] = str(total)
 
-@router.get("/", response_model=PaginatedReportsResponse)
+@router.get("/", response_model=PaginatedReportsResponse) #NOTE: Vale la pena ponerlo a 0 para todos los registros?
 async def get_reports(response: Response, page: int = Query(0, ge=0, description="Pagina actual"),
     page_size: int = Query(0, ge=0, description="Cantidad de registros por pagina"),
     db: AsyncSession = Depends(get_db)):

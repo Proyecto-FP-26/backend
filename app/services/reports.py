@@ -140,7 +140,7 @@ async def save_images(files: list[UploadFile], report_id: int, user_id: int, db:
         url_file_path = file_path.as_posix()
 
         if file.content_type not in ALLOWED_MIMES:
-            saved_files.append(f"Archivo {file.filename} con tipo {file.content_type} no permitido") #TODO: Temporal, cambiar por mensaje de error o algo similar
+            saved_files.append(f"Archivo {file.filename} con tipo {file.content_type} no permitido") #HACK: Temporal, cambiar por mensaje de error o algo similar
             continue #Ignorar archivos con tipo no permitido
 
         with file_path.open("wb") as buffer:
