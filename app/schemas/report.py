@@ -1,17 +1,21 @@
-from pydantic import BaseModel
 from datetime import datetime
-from app.models.report import ReportStatus, ReportPriority
-from app.schemas.user import UserBasicResponse
+
+from pydantic import BaseModel
+
+from app.models.report import ReportPriority, ReportStatus
 from app.schemas.report_category import ReportCategoryResponse
+from app.schemas.user import UserBasicResponse
+
 
 class ReportCreate(BaseModel):
     title: str
     description: str
     latitude: float
     longitude: float
-    priority: ReportPriority = ReportPriority.mid
+    priority: ReportPriority = ReportPriority.MID
     categoryId: int
     userId: int
+
 
 class ReportUpdate(BaseModel):
     title: str | None = None
@@ -22,6 +26,7 @@ class ReportUpdate(BaseModel):
     priority: ReportPriority | None = None
     categoryId: int | None = None
     resolvedById: int | None = None
+
 
 class ReportResponse(BaseModel):
     id: int
@@ -39,10 +44,12 @@ class ReportResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
+
 class PaginatedReportsResponse(BaseModel):
     page: int
     page_size: int
     reports: list[ReportResponse]
+
 
 class ReportStatusResponse(BaseModel):
     id: int
@@ -50,13 +57,16 @@ class ReportStatusResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
+
 class ReportImagesResponse(BaseModel):
     num_images: int
     images: list[ImageSchema]
 
+
 class ImageSchema(BaseModel):
     id: int
     url: str
+
 
 class ReportCommentResponse(BaseModel):
     id: int
@@ -65,6 +75,7 @@ class ReportCommentResponse(BaseModel):
     user: UserBasicResponse
 
     model_config = {"from_attributes": True}
+
 
 class ReportCommentsResponse(BaseModel):
     num_comments: int

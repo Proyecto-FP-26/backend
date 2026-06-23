@@ -1,12 +1,16 @@
-from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
+
+from pydantic import BaseModel, EmailStr, Field
+
 from app.models.user import UserRole
+
 
 class UserCreate(BaseModel):
     username: str
     email: EmailStr
     passwordHash: str = Field(validation_alias="password")
     role: UserRole = UserRole.user
+
 
 class UserResponse(BaseModel):
     id: int
@@ -17,7 +21,10 @@ class UserResponse(BaseModel):
     points: int
     createdAt: datetime
 
-    model_config = {"from_attributes": True}  #necesario para leer desde el modelo SQLAlchemy
+    model_config = {
+        "from_attributes": True
+    }  # necesario para leer desde el modelo SQLAlchemy
+
 
 class UserBasicResponse(BaseModel):
     id: int

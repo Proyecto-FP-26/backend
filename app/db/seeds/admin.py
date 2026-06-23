@@ -1,9 +1,10 @@
-from app.core.settings import settings
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.user import User, UserRole
 from app.core.security import hash_password
+from app.core.settings import settings
+from app.models.user import User, UserRole
+
 
 async def seed_admin(db: AsyncSession) -> None:
     username = settings.ADMIN_USERNAME

@@ -1,6 +1,9 @@
-from pydantic import BaseModel
 from datetime import datetime
+
+from pydantic import BaseModel
+
 from app.models.user import UserRole
+
 
 class UserResponse(BaseModel):
     id: int
@@ -13,9 +16,11 @@ class UserResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
+
 class UserLogin(BaseModel):
     username: str
     password: str
+
 
 class UserSessionCreate(BaseModel):
     userId: int
@@ -23,6 +28,7 @@ class UserSessionCreate(BaseModel):
     ip: str
     rememberMe: bool
     expiresAt: datetime
+
 
 class LoginResponse(BaseModel):
     access_token: str
